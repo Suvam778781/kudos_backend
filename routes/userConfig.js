@@ -1,10 +1,17 @@
 
 const express=require('express')
-const { handleUserSavingToDb } = require('../controllers/userController')
+const { handleUserSavingToDb, check } = require('../controllers/userController')
+
 
 
 const userConfig=express.Router()
 
 
-const userConfigRoute=userConfig.post('/adduser',handleUserSavingToDb)
+userConfig.post('/adduser',handleUserSavingToDb)
+userConfig.get('/check',check)
+
+
+module.exports={
+    userConfig
+}
 

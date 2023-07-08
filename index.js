@@ -5,6 +5,7 @@ app.use(express.json());
 require("dotenv").config();
 const cors = require("cors");
 const { connection } = require("./config/db");
+const { userConfig } = require("./routes/userConfig");
 
 app.use(express.json());
 app.use(cors());
@@ -19,6 +20,9 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => {
   res.status(200).send({ result: "Home page" });
 });
+
+
+app.use('/user',userConfig)
 
 // Create server and socket.io instance
 const server = app.listen(8090, async (err) => {
