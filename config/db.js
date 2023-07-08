@@ -47,5 +47,5 @@ const connection = () => {
 };
 
 
-  module.exports={dbConfig,connection,pool,releaseConnectionPool,}
+  module.exports={dbConfig,connection,pool,releaseConnectionPool}
 
