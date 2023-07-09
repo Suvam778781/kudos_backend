@@ -2,8 +2,9 @@ import mysql from 'mysql2/promise';
 import { connection } from '../config/db';
 
 const handleLike = async (req, res) => {
-    const { post_id } = req.query;
-  
+    const { post_id } = req.params;
+    const { authorization } = req.headers;
+    const user_id = verifyToken(authorization)
     try {
       // Check if the user has already liked the post
       const [rows] = await connection.execute(
@@ -41,7 +42,7 @@ const handleComment=async(req, res)=>{
     const { authorization } = req.headers;
     const user_commented_email = verifyToken(authorization); // Implement this function to extract the email from the Authorization header
   
-    const { commented_at_post: commentedAtPost } = req.query;
+    const { commented_at_post: commentedAtPost } = req.params;
     const { user_comment } = req.body;
     try {
       // Create a new comment entry
@@ -74,12 +75,10 @@ const handleComment=async(req, res)=>{
   }
 
 const handleUserLikedPosts=async(req, res)=>{
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+
 
   const { authorization } = req.headers;
-  const userEmail = parseAuthorizationHeader(authorization); // Implement this function to extract the user email from the Authorization header
+  const userEmail = verifyToken(authorization); // Implement this function to extract the user email from the Authorization header
 
   try {
     const [rows] = await connection.execute(
