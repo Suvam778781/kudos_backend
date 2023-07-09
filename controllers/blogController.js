@@ -1,35 +1,41 @@
 import mysql from 'mysql2/promise';
 import { connection } from '../config/db';
 
-const handleLike=async(req, res)=>{
-  const { post_id} = req.query;
-  try {
-    // Check if the user has already liked the post
-    const [rows] = await connection.execute(
-      'SELECT * FROM likes WHERE post_id = ? AND user_id = ?',
-      [post_id, user.id]
-    );
-
-    if (rows.length > 0) {
-      // User already liked the post, so remove the like entry
-      await connection.execute('DELETE FROM likes WHERE post_id = ? AND user_id = ?', [post_id, user.id]);
-      return res.status(200).json({ message: 'Like removed successfully' });
+const handleLike = async (req, res) => {
+    const { post_id } = req.query;
+  
+    try {
+      // Check if the user has already liked the post
+      const [rows] = await connection.execute(
+        'SELECT * FROM likes WHERE post_id = ? AND user_id = ?',
+        [post_id, user.id]
+      );
+  
+      if (rows.length > 0) {
+        // User already liked the post, so remove the like entry
+        await connection.execute('DELETE FROM likes WHERE post_id = ? AND user_id = ?', [post_id, user.id]);
+        // Decrease the like_count on the post table
+        await connection.execute('UPDATE posts SET like_count = like_count - 1 WHERE post_id = ?', [post_id]);
+        return res.status(200).json({ message: 'Like removed successfully' });
+      }
+  
+      // Create a new like entry
+      await connection.execute('INSERT INTO likes (like_user_email, post_id, user_id) VALUES (?, ?, ?)', [
+        user.email,
+        post_id,
+        user.id,
+      ]);
+      // Increase the like_count on the post table
+      await connection.execute('UPDATE posts SET like_count = like_count + 1 WHERE post_id = ?', [post_id]);
+      return res.status(200).json({ message: 'Post liked successfully' });
+    } catch (error) {
+      console.error('Error handling like:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    } finally {
+      connection.end();
     }
-    // Create a new like entry
-    await connection.execute('INSERT INTO likes (like_user_email, post_id, user_id) VALUES (?, ?, ?)', [
-      user.email,
-      post_id,
-      user.id,
-    ]);
-    return res.status(200).json({ message: 'Post liked successfully' });
-  } catch (error) {
-    console.error('Error handling like:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  } finally {
-    connection.end();
-  }
-}
-
+  };
+  
 
 const handleComment=async(req, res)=>{
     const { authorization } = req.headers;
@@ -52,4 +58,44 @@ const handleComment=async(req, res)=>{
       connection.end();
     }
   }
-  module.exports={handleComment, handleLike}
+
+  const handleAllPosts=async(req, res)=>{
+    try {
+      const [rows] = await connection.execute(
+        'SELECT post_id, title, content, author, created_at, updated_at, like_count FROM posts'
+      );
+      return res.status(200).json({ posts: rows });
+    } catch (error) {
+      console.error('Error retrieving posts:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    } finally {
+      connection.end();
+    }
+  }
+
+const handleUserLikedPosts=async(req, res)=>{
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const { authorization } = req.headers;
+  const userEmail = parseAuthorizationHeader(authorization); // Implement this function to extract the user email from the Authorization header
+
+  try {
+    const [rows] = await connection.execute(
+      'SELECT p.post_id, p.title, p.content, p.author, p.created_at, p.updated_at, p.like_count ' +
+        'FROM posts p INNER JOIN likes l ON p.post_id = l.post_id ' +
+        'WHERE l.like_user_email = ?',
+      [userEmail]
+    );
+
+    return res.status(200).json({ likedPosts: rows });
+  } catch (error) {
+    console.error('Error retrieving liked posts:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  } finally {
+    connection.end();
+  }
+}
+  
+  module.exports={handleComment, handleLike, handleAllPosts, handleUserLikedPosts}
