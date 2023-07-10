@@ -17,10 +17,10 @@ const handlePostController = (req, res) => {
       else {
         //getting id and given name from query
         const {given_name,id} = result[0];
-        const postQ = "INSERT INTO post (`post_id`, `category`, `title`, `content`, `post_img`, `author`) VALUES (?, ?, ?, ?, ?, ?)";
+        const postQ = "INSERT INTO post (`user_id`, `category`, `title`, `content`, `post_img`, `author`) VALUES (?, ?, ?, ?, ?, ?)";
 
 
-        
+
 
         pool.query(
           postQ,

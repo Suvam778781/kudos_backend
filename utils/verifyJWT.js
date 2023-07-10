@@ -10,7 +10,7 @@ const verifyJwt=(token)=>{
           return { error: "Invalid token", err }
         }
         else{
-            console.log(decodedToken,"decode")
+        
             return decodedToken
         }
   
