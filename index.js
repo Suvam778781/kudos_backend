@@ -6,6 +6,7 @@ require("dotenv").config();
 const cors = require("cors");
 const { connection } = require("./config/db");
 const { userConfig } = require("./routes/userConfig");
+const { PostRouter } = require("./routes/postConfig");
 
 app.use(express.json());
 app.use(cors());
@@ -23,6 +24,7 @@ app.get("/", (req, res) => {
 
 
 app.use('/user',userConfig)
+app.use('/insert',PostRouter)
 
 // Create server and socket.io instance
 const server = app.listen(8090, async (err) => {

@@ -8,7 +8,7 @@ const userConfig=express.Router()
 
 
 userConfig.post('/adduser',handleUserSavingToDb)
-userConfig.get('/check',check)
+
 
 
 module.exports={

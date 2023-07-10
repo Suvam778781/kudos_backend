@@ -11,7 +11,7 @@ const verifyJwt=(token)=>{
         }
         else{
             console.log(decodedToken,"decode")
-            return{ decodedToken}
+            return decodedToken
         }
   
       });
