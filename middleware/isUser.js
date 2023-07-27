@@ -7,11 +7,11 @@ const isUser = (req, res, next) => {
     jwt.verify(token, process.env.secret_key, (err, decoded) => {
       if (err) return res.status(301).send({ decode: "cannot decode token" });
 
-      console.log(decoded, "decoded");
+      //console.log( decoded, " in isUser decoded m.w");
       if (decoded.id) {
-        req.body.user_id = decoded.id;
-       
-        next();
+        
+        req.body.users_id= decoded.id;
+         next();
       } else {
         return res.status(301).send({ err: "something missing" });
       }

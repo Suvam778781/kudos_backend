@@ -1,13 +1,28 @@
 const { pool } = require("../config/db");
+const { imageLink } = require("../utils/uploadimg");
 
-const handlePostController = (req, res) => {
+const handlePostController = async(req, res) => {
   try {
-    const { category, title, content, post_img } = req.body;
-    const author_id = req.body.user_id;
+    const { category, title, content } = req.body;
+    const author_id = req.body.users_id;
 
-    console.log(author_id, "authorid");
+    console.log(req.body.users_id,"this body")
 
+
+   
+
+    if(!author_id){
+      return res.status(301).send({err:"authorId cannot be null login again"})
+    }
+
+  
+
+    const post_img=await imageLink(req,res)
+    
     const author_nameQ = "SELECT given_name, id FROM user WHERE user_id = ?";
+    if(!category||!title||!content){
+      return res.status(301).send({"err":"feild are required before posting"})
+    }
 
     pool.query(author_nameQ, [author_id], (err, result) => {
       if (err)
