@@ -1,4 +1,5 @@
 const { connection, pool } = require("../config/db");
+const { fetchCommentsForPost } = require("../utils/fetchComentsForPost");
 const { getCurrentDateTime } = require("../utils/generateCurrentDate");
 const { verifyJwt } = require("../utils/verifyJWT");
 
@@ -104,13 +105,22 @@ const handleComment = async (req, res) => {
 const handleAllPosts = async (req, res) => {
   try {
     pool.query(
-      "SELECT post_id, title, content, author, created_at, updated_at, like_count FROM post",
-      (err, result) => {
+      "SELECT * FROM post",
+      async (err, result) => {
         if (err) {
           console.error("Error retrieving posts:", err);
           return res.status(500).json({ error: "Internal Server Error" });
         }
-        return res.status(200).json({ posts: result });
+
+        // Convert the result to an array to use map
+        const posts = Array.from(result);
+
+        // Fetch comments for each post and add them as a 'comments' property
+        for (const post of posts) {
+          post.comments = await fetchCommentsForPost(post.post_id);
+        }
+
+        return res.status(200).json({ posts });
       }
     );
   } catch (error) {
