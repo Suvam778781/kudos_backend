@@ -31,7 +31,7 @@ app.use("/blog",blogConfigRoute)
 // Create server and socket.io instance
 const server = app.listen(process.env.PORT||8000, async (err) => {
   if (err) {
-    console.log("inside server fuinction")
+    console.log("inside server function")
     console.log(err);
   } else {
     try {
