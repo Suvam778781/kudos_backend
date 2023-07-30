@@ -1,18 +1,24 @@
-const { connection, pool } = require("../config/db");
 const { sendEmail } = require("../utils/emailSender");
 
 const handlePostEmail = async (req, res) => {
-  const { email, name, message, service } = req.body;
+  const recipients = [
+    "manish63singh@gmail.com",
+    "suvamswagatamp@gmail.com",
+    "adarsh474747@gmail.com",
+  ];
+  const { name, clientemail, message } = req.body;
+
+ 
+
+
   try {
-    await sendEmail(name, email, message, service);
-    res
-      .status(200)
-      .send({
-        succes: "Email send succesfully. We will get back to you sortly",
-      });
+    await sendEmail(recipients, name, message,clientemail);
+    res.status(200).send({
+      succes: "Email send succesfully.",
+    });
   } catch {
     res.status(500).send({ error: "Email sending failed. Please try again." });
   }
 };
 
-module.exports={handlePostEmail}
+module.exports = { handlePostEmail };

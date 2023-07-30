@@ -8,6 +8,7 @@ const { connection } = require("./config/db");
 const { userConfig } = require("./routes/userConfig");
 const { PostRouter } = require("./routes/postConfig");
 const { blogConfigRoute } = require("./routes/blogConfig");
+const { contactConfigRoute } = require("./routes/contactConfig");
 
 app.use(express.json());
 app.use(cors());
@@ -27,6 +28,7 @@ app.get("/", (req, res) => {
 app.use('/user',userConfig)
 app.use('/insert',PostRouter)
 app.use("/blog",blogConfigRoute)
+app.use('/mail',contactConfigRoute)
 
 // Create server and socket.io instance
 const server = app.listen(process.env.PORT||8000, async (err) => {
