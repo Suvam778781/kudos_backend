@@ -123,7 +123,7 @@ const handleComment = async (req, res) => {
 
             // Retrieve the inserted comment from the database to construct the full response
             pool.query(
-              "SELECT user_commented_email, user_comment, commented_at_post, user_commented_name, created_at FROM comment WHERE comment_id = ?",
+              "SELECT * FROM comment WHERE comment_id = ?",
               [result.insertId], // Assuming comment_id is the primary key or auto-incremented field
               (err, commentResult) => {
                 if (err) {
@@ -269,6 +269,48 @@ const handelGetSingleCategory = async (req, res) => {
   }
 };
 
+const handelDeleteComment = async (req, res) => {
+  try {
+    const { comment_id } = req.params;
+
+   
+
+    const { authorization } = req.headers;
+    if (!comment_id || !authorization) {
+      return res.status(301).send({ error: "post_id or auth cannot be blank" });
+    }
+
+    const { email } = await verifyJwt(authorization);
+
+    const email_in_comment_tb_Q = 'SELECT user_commented_email from comment where comment_id=?';
+    pool.query(email_in_comment_tb_Q, [comment_id], (err, result) => {
+      if (err) {
+        return res.status(301).send({ error: "cannot complete req at the moment", err });
+      }
+      const email_present_in_Db = result[0]?.user_commented_email;
+
+      if (!email_present_in_Db) {
+        return res.status(301).send({ error: "not authorized" });
+      } else if (email_present_in_Db === email) {
+        const delQ = 'DELETE FROM comment WHERE comment_id=?';
+        pool.query(delQ, [comment_id], (err, result) => {
+          if (err) {
+            return res.status(301).send({ error: "cannot process req", err });
+          } else {
+            return res.status(200).send({ success: "del succ", comment_id: comment_id });
+          }
+        });
+      } else {
+        return res.status(400).send('not verified');
+      }
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ error: "cannot del now", error });
+  }
+};
+
+
 module.exports = {
   handleComment,
   handleLike,
@@ -276,4 +318,5 @@ module.exports = {
   handleUserLikedPosts,
   handleGetSinglePost,
   handelGetSingleCategory,
+  handelDeleteComment
 };
