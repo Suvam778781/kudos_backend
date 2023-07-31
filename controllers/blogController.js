@@ -91,6 +91,13 @@ const handleLike = async (req, res) => {
 const handleComment = async (req, res) => {
   const { authorization } = req.headers;
   const { email } = await verifyJwt(authorization); // Implement this function to extract the email from the Authorization header
+const {user_comment}=req.body
+const {post_id}=req.params;
+
+if(!user_comment||!post_id){
+  return res.status(301).send({"error":"body cannot be empty"})
+}
+
 
   const timeFn=getCurrentDateTime()
 
@@ -108,12 +115,12 @@ const handleComment = async (req, res) => {
         // Create a new comment entry
         const date = getCurrentDateTime();
         pool.query(
-          "INSERT INTO comments (user_commented_email, user_comment, commented_at_post,user_commented_name created_at) VALUES (?, ?, ?, ?)",
-          [email, user_comment, post_id, date,personName,timeFn],
+          "INSERT INTO comment (user_commented_email, user_comment, commented_at_post,user_commented_name,created_at) VALUES (?, ?, ?, ?, ?)",
+          [email, user_comment, post_id,personName,timeFn],
           (err, result) => {
             if (err) {
               console.error("Error handling comment:", err);
-              return res.status(500).json({ error: "Internal Server Error" });
+              return res.status(500).json({ error: "Internal Server Error",err });
             }
             return res.status(200).json({ message: "Comment added successfully" });
           }
