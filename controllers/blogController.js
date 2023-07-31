@@ -166,8 +166,6 @@ const handleUserLikedPosts = async (req, res) => {
 const handleGetSinglePost = async (req, res) => {
   const { post_id } = req.params;
 
-  
-
   try {
     if (!post_id) {
       return res
@@ -200,30 +198,32 @@ const handleGetSinglePost = async (req, res) => {
   }
 };
 
-
-
-const handelGetSingleCategory = (req, res) => {
+const handelGetSingleCategory = async (req, res) => {
   try {
     const { filter } = req.query;
-
-   
-
-  
-
     // Check if the 'category' parameter is provided in the request
     if (!filter) {
       return res.status(400).json({ error: "Category is required in the request params." });
     }
 
-    // Execute the database query to get all posts with the given category
-    pool.query("SELECT * FROM post WHERE category = ?", [filter], (err, result) => {
+    const query = "SELECT * FROM post WHERE category = ?";
+    const queryParams = [filter];
+
+    pool.query(query, queryParams, async (err, result) => {
       if (err) {
         console.error("Error retrieving posts for category:", err);
         return res.status(500).json({ error: "Internal Server Error" });
       }
 
-      // Send the list of posts with the given category as a response
-      return res.status(200).json({ posts: result });
+      // Convert the result to an array to use map
+      const posts = Array.from(result);
+
+      // Fetch comments for each post and add them as a 'comments' property
+      for (const post of posts) {
+        post.comments = await fetchCommentsForPost(post.post_id);
+      }
+
+      return res.status(200).json({ posts });
     });
   } catch (error) {
     console.error("Error in handelGetSingleCategory:", error);
@@ -233,11 +233,12 @@ const handelGetSingleCategory = (req, res) => {
 
 
 
+
 module.exports = {
   handleComment,
   handleLike,
   handleAllPosts,
   handleUserLikedPosts,
   handleGetSinglePost,
-  handelGetSingleCategory
+  handelGetSingleCategory,
 };
