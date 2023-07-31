@@ -91,54 +91,64 @@ const handleLike = async (req, res) => {
 const handleComment = async (req, res) => {
   const { authorization } = req.headers;
   const { email } = await verifyJwt(authorization); // Implement this function to extract the email from the Authorization header
-const {user_comment}=req.body
-const {post_id}=req.params;
+  const { user_comment } = req.body;
+  const { post_id } = req.params;
 
-if(!user_comment||!post_id){
-  return res.status(301).send({"error":"body cannot be empty"})
-}
+  if (!user_comment || !post_id) {
+    return res.status(301).send({ error: "body cannot be empty" });
+  }
 
-
-  const timeFn=getCurrentDateTime()
+  const timeFn = getCurrentDateTime();
 
   const findNameQ = "SELECT given_name from user where email=?";
   pool.query(findNameQ, [email], (err, result) => {
     if (err) {
-      return res
-        .status(301)
-        .send("not able to find the Name of user by given email", err);
+      return res.status(301).send("not able to find the Name of user by given email", err);
     } else {
-      
-      const personName=result[0].given_name
+      const personName = result[0].given_name;
 
       try {
         // Create a new comment entry
         const date = getCurrentDateTime();
         pool.query(
-          "INSERT INTO comment (user_commented_email, user_comment, commented_at_post,user_commented_name,created_at) VALUES (?, ?, ?, ?, ?)",
-          [email, user_comment, post_id,personName,timeFn],
+          "INSERT INTO comment (user_commented_email, user_comment, commented_at_post, user_commented_name, created_at) VALUES (?, ?, ?, ?, ?)",
+          [email, user_comment, post_id, personName, timeFn],
           (err, result) => {
             if (err) {
               console.error("Error handling comment:", err);
-              return res.status(500).json({ error: "Internal Server Error",err });
+              return res.status(500).json({ error: "Internal Server Error", err });
             }
-            return res.status(200).json({ message: "Comment added successfully" });
+
+           
+
+            // Retrieve the inserted comment from the database to construct the full response
+            pool.query(
+              "SELECT user_commented_email, user_comment, commented_at_post, user_commented_name, created_at FROM comment WHERE comment_id = ?",
+              [result.insertId], // Assuming comment_id is the primary key or auto-incremented field
+              (err, commentResult) => {
+                if (err) {
+                  console.error("Error retrieving comment:", err);
+                  return res.status(500).json({ error: "Internal Server Error" });
+                }
+
+                const fullResponse = commentResult[0];
+
+                return res.status(200).json({
+                  message: "Comment added successfully",
+                  comment: fullResponse,
+                });
+              }
+            );
           }
         );
       } catch (error) {
         console.error("Error handling comment:", error);
         return res.status(500).json({ error: "Internal Server Error" });
       }
-
-
-
-
-
     }
   });
-
- 
 };
+
 
 const handleAllPosts = async (req, res) => {
   try {
