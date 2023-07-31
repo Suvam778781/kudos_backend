@@ -91,27 +91,53 @@ const handleLike = async (req, res) => {
 const handleComment = async (req, res) => {
   const { authorization } = req.headers;
   const { email } = await verifyJwt(authorization); // Implement this function to extract the email from the Authorization header
+const {user_comment}=req.body
+const {post_id}=req.params;
 
-  const { post_id } = req.params;
-  const { user_comment } = req.body;
-  try {
-    // Create a new comment entry
-    const date = getCurrentDateTime();
-    pool.query(
-      "INSERT INTO comments (user_commented_email, user_comment, commented_at_post, created_at) VALUES (?, ?, ?, ?)",
-      [email, user_comment, post_id, date],
-      (err, result) => {
-        if (err) {
-          console.error("Error handling comment:", err);
-          return res.status(500).json({ error: "Internal Server Error" });
-        }
-        return res.status(200).json({ message: "Comment added successfully" });
+if(!user_comment||!post_id){
+  return res.status(301).send({"error":"body cannot be empty"})
+}
+
+
+  const timeFn=getCurrentDateTime()
+
+  const findNameQ = "SELECT given_name from user where email=?";
+  pool.query(findNameQ, [email], (err, result) => {
+    if (err) {
+      return res
+        .status(301)
+        .send("not able to find the Name of user by given email", err);
+    } else {
+      
+      const personName=result[0].given_name
+
+      try {
+        // Create a new comment entry
+        const date = getCurrentDateTime();
+        pool.query(
+          "INSERT INTO comment (user_commented_email, user_comment, commented_at_post,user_commented_name,created_at) VALUES (?, ?, ?, ?, ?)",
+          [email, user_comment, post_id,personName,timeFn],
+          (err, result) => {
+            if (err) {
+              console.error("Error handling comment:", err);
+              return res.status(500).json({ error: "Internal Server Error",err });
+            }
+            return res.status(200).json({ message: "Comment added successfully" });
+          }
+        );
+      } catch (error) {
+        console.error("Error handling comment:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
       }
-    );
-  } catch (error) {
-    console.error("Error handling comment:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
+
+
+
+
+
+    }
+  });
+
+ 
 };
 
 const handleAllPosts = async (req, res) => {
@@ -203,7 +229,9 @@ const handelGetSingleCategory = async (req, res) => {
     const { filter } = req.query;
     // Check if the 'category' parameter is provided in the request
     if (!filter) {
-      return res.status(400).json({ error: "Category is required in the request params." });
+      return res
+        .status(400)
+        .json({ error: "Category is required in the request params." });
     }
 
     const query = "SELECT * FROM post WHERE category = ?";
@@ -230,9 +258,6 @@ const handelGetSingleCategory = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-
-
 
 module.exports = {
   handleComment,
