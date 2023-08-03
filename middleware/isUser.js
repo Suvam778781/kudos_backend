@@ -5,8 +5,15 @@ const isUser = (req, res, next) => {
   if (!token) return res.status(301).send({ invalid: "token not present" });
   try {
     jwt.verify(token, process.env.secret_key, (err, decoded) => {
-      if (err) return res.status(301).send({ decode: "cannot decode token" });
 
+      
+      console.log(token,process.env.secret_key,"################")
+      
+      if (err){ 
+        console.log(err,"Error in jwt verify")
+        return res.status(301).send({ decode: "cannot decode token" ,err});
+    
+    }
       //console.log( decoded, " in isUser decoded m.w");
       if (decoded.id) {
         

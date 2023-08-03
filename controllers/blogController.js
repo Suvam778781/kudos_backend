@@ -103,7 +103,9 @@ const handleComment = async (req, res) => {
   const findNameQ = "SELECT given_name from user where email=?";
   pool.query(findNameQ, [email], (err, result) => {
     if (err) {
-      return res.status(301).send("not able to find the Name of user by given email", err);
+      return res
+        .status(301)
+        .send("not able to find the Name of user by given email", err);
     } else {
       const personName = result[0].given_name;
 
@@ -116,10 +118,10 @@ const handleComment = async (req, res) => {
           (err, result) => {
             if (err) {
               console.error("Error handling comment:", err);
-              return res.status(500).json({ error: "Internal Server Error", err });
+              return res
+                .status(500)
+                .json({ error: "Internal Server Error", err });
             }
-
-           
 
             // Retrieve the inserted comment from the database to construct the full response
             pool.query(
@@ -128,7 +130,9 @@ const handleComment = async (req, res) => {
               (err, commentResult) => {
                 if (err) {
                   console.error("Error retrieving comment:", err);
-                  return res.status(500).json({ error: "Internal Server Error" });
+                  return res
+                    .status(500)
+                    .json({ error: "Internal Server Error" });
                 }
 
                 const fullResponse = commentResult[0];
@@ -148,7 +152,6 @@ const handleComment = async (req, res) => {
     }
   });
 };
-
 
 const handleAllPosts = async (req, res) => {
   try {
@@ -175,22 +178,19 @@ const handleAllPosts = async (req, res) => {
 };
 
 const handleUserLikedPosts = async (req, res) => {
-  const { authorization, emailtoken } = req.headers;
-  const user_id = verifyJwt(authorization);
-  const { email } = await verifyJwt(emailtoken); // Implement this function to extract the user email from the Authorization header
+  const { email } = req.headers;
 
   try {
     pool.query(
-      "SELECT p.post_id, p.title, p.content, p.author, p.created_at, p.updated_at, p.like_count " +
-        "FROM post p INNER JOIN like_post l ON p.post_id = l.post_id " +
-        "WHERE l.like_user_email = ?",
+      "SELECT post_id FROM like_post  WHERE like_user_email = ?",
       [email],
       (err, result) => {
         if (err) {
           console.error("Error retrieving liked posts:", err);
           return res.status(500).json({ error: "Internal Server Error" });
         }
-        return res.status(200).json({ likedPosts: result });
+        const likedPosts = result.map((row) => row.post_id);
+        return res.status(200).json({ likedPosts });
       }
     );
   } catch (error) {
@@ -273,8 +273,6 @@ const handelDeleteComment = async (req, res) => {
   try {
     const { comment_id } = req.params;
 
-   
-
     const { authorization } = req.headers;
     if (!comment_id || !authorization) {
       return res.status(301).send({ error: "post_id or auth cannot be blank" });
@@ -282,26 +280,31 @@ const handelDeleteComment = async (req, res) => {
 
     const { email } = await verifyJwt(authorization);
 
-    const email_in_comment_tb_Q = 'SELECT user_commented_email from comment where comment_id=?';
+    const email_in_comment_tb_Q =
+      "SELECT user_commented_email from comment where comment_id=?";
     pool.query(email_in_comment_tb_Q, [comment_id], (err, result) => {
       if (err) {
-        return res.status(301).send({ error: "cannot complete req at the moment", err });
+        return res
+          .status(301)
+          .send({ error: "cannot complete req at the moment", err });
       }
       const email_present_in_Db = result[0]?.user_commented_email;
 
       if (!email_present_in_Db) {
         return res.status(301).send({ error: "not authorized" });
       } else if (email_present_in_Db === email) {
-        const delQ = 'DELETE FROM comment WHERE comment_id=?';
+        const delQ = "DELETE FROM comment WHERE comment_id=?";
         pool.query(delQ, [comment_id], (err, result) => {
           if (err) {
             return res.status(301).send({ error: "cannot process req", err });
           } else {
-            return res.status(200).send({ success: "del succ", comment_id: comment_id });
+            return res
+              .status(200)
+              .send({ success: "del succ", comment_id: comment_id });
           }
         });
       } else {
-        return res.status(400).send('not verified');
+        return res.status(400).send("not verified");
       }
     });
   } catch (error) {
@@ -310,7 +313,6 @@ const handelDeleteComment = async (req, res) => {
   }
 };
 
-
 module.exports = {
   handleComment,
   handleLike,
@@ -318,5 +320,5 @@ module.exports = {
   handleUserLikedPosts,
   handleGetSinglePost,
   handelGetSingleCategory,
-  handelDeleteComment
+  handelDeleteComment,
 };
