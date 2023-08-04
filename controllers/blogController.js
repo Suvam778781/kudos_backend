@@ -5,8 +5,12 @@ const { verifyJwt } = require("../utils/verifyJWT");
 
 const handleLike = async (req, res) => {
   const { post_id } = req.params;
-  const { authorization } = req.headers;
-  let { id, email } = await verifyJwt(authorization);
+  let { id, email } = req.body;
+  if(!id||!email||!post_id){
+   return res.status(400).json({res:"Invalid request data."})
+  }
+
+  console.log(id,email,post_id,"***********************************")
 
   try {
     // Acquire a connection from the pool
@@ -62,6 +66,7 @@ const handleLike = async (req, res) => {
               }
 
               // Increase the like_count on the post table
+             
               pool.query(
                 "UPDATE post SET like_count = like_count + 1 WHERE post_id = ?",
                 [post_id],
